@@ -119,7 +119,9 @@ const FoldersScreen: React.FC = () => {
               await StorageService.deleteFolder(folderId);
               console.log('Folder deleted from storage, reloading folders');
               await loadFolders(); // Reload from storage instead of filtering local state
+              await recalculateItemCounts(); // Recalculate item counts after deletion
               console.log('Folders reloaded successfully');
+              Alert.alert('Success', 'Folder deleted successfully');
             } catch (error) {
               console.error('Error deleting folder:', error);
               Alert.alert('Error', 'Failed to delete folder: ' + (error instanceof Error ? error.message : 'Unknown error'));
@@ -175,28 +177,7 @@ const FoldersScreen: React.FC = () => {
           borderTopWidth: 1,
           borderTopColor: 'rgba(255,255,255,0.1)',
         }}
-        onPress={() => {
-          Alert.alert(
-            'Delete Folder',
-            `Delete "${item.name}"? All items will be moved to uncategorized.`,
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { 
-                text: 'Delete', 
-                style: 'destructive',
-                onPress: async () => {
-                  try {
-                    await StorageService.deleteFolder(item.id);
-                    await recalculateItemCounts();
-                    Alert.alert('Success', 'Folder deleted!');
-                  } catch (error) {
-                    Alert.alert('Error', 'Failed to delete folder');
-                  }
-                }
-              }
-            ]
-          );
-        }}
+        onPress={() => handleDeleteFolder(item.id, item.name)}
       >
         <Text style={{ color: 'white', fontWeight: 'bold' }}>DELETE</Text>
       </TouchableOpacity>

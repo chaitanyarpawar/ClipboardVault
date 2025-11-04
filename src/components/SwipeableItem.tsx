@@ -63,8 +63,12 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({
           <TouchableOpacity
             style={styles.actionTouchable}
             onPress={() => {
-              console.log('Left swipe action pressed:', text);
-              onPress();
+              console.log('Left swipe action pressed:', text, 'Function available:', !!onPress);
+              if (onPress) {
+                onPress();
+              } else {
+                console.log('No onPress function provided for action:', text);
+              }
               swipeableRef.current?.close();
             }}
           >
@@ -83,7 +87,14 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({
         '#10B981',
         64,
         progress,
-        onCopy,
+        () => {
+          console.log('Copy action clicked');
+          if (onCopy) {
+            onCopy();
+          } else {
+            Alert.alert('Copy', 'Copy function not available');
+          }
+        },
         'copy-outline'
       )}
       {renderLeftAction(
@@ -91,7 +102,14 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({
         item.isFavorite ? '#F59E0B' : '#EF4444',
         128,
         progress,
-        onToggleFavorite,
+        () => {
+          console.log('Favorite action clicked');
+          if (onToggleFavorite) {
+            onToggleFavorite();
+          } else {
+            Alert.alert('Favorite', 'Favorite function not available');
+          }
+        },
         item.isFavorite ? 'heart' : 'heart-outline'
       )}
       {renderLeftAction(
@@ -100,14 +118,12 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({
         192,
         progress,
         () => {
-          Alert.alert(
-            'Delete Item',
-            'Are you sure you want to delete this item?',
-            [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Delete', style: 'destructive', onPress: onDelete },
-            ]
-          );
+          console.log('Delete action clicked');
+          if (onDelete) {
+            onDelete();
+          } else {
+            Alert.alert('Delete', 'Delete function not available');
+          }
         },
         'trash-outline'
       )}
@@ -126,7 +142,14 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({
   const ItemContent = () => (
     <TouchableOpacity 
       style={[styles.itemContainer, { backgroundColor: theme.colors.surface }]} 
-      onPress={onPress}
+      onPress={() => {
+        console.log('ItemContent pressed, onPress function available:', !!onPress);
+        if (onPress) {
+          onPress();
+        } else {
+          console.log('No onPress function provided');
+        }
+      }}
       onLongPress={() => {
         if (onLongPress) {
           onLongPress();

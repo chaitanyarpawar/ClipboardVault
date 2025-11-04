@@ -23,11 +23,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import StorageService from '../services/StorageService';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { RootStackParamList } from '../navigation/Navigation';
 import { SwipeableItem } from '../components';
+
+type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 const HomeScreen: React.FC = () => {
   const { theme, isDark } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp>();
   const route = useRoute();
   
   const [clipboardItems, setClipboardItems] = useState<ClipboardItem[]>([]);
@@ -288,6 +292,7 @@ const HomeScreen: React.FC = () => {
   };
 
   const handleDeleteItem = async (itemId: string) => {
+    console.log('Delete item requested for ID:', itemId);
     Alert.alert(
       'Delete Item',
       'Are you sure you want to delete this item?',
@@ -298,10 +303,14 @@ const HomeScreen: React.FC = () => {
           style: 'destructive',
           onPress: async () => {
             try {
+              console.log('User confirmed deletion, deleting item:', itemId);
               await ClipboardService.deleteItem(itemId);
-              loadClipboardItems();
+              console.log('Item deleted successfully, reloading items');
+              await loadClipboardItems();
+              Alert.alert('Success', 'Item deleted successfully');
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete item');
+              console.error('Error deleting item:', error);
+              Alert.alert('Error', 'Failed to delete item: ' + (error instanceof Error ? error.message : 'Unknown error'));
             }
           },
         },
@@ -334,11 +343,20 @@ const HomeScreen: React.FC = () => {
   const renderClipboardItem = ({ item }: { item: ClipboardItem }) => (
     <SwipeableItem
       item={item}
-      onPress={() => (navigation as any).navigate('Detail', { itemId: item.id })}
+      onPress={() => {
+        console.log('Item pressed, navigating to Detail with itemId:', item.id);
+        navigation.navigate('Detail', { itemId: item.id });
+      }}
       onLongPress={() => handleLongPressItem(item)}
       onToggleFavorite={() => handleToggleFavorite(item.id)}
-      onDelete={() => handleDeleteItem(item.id)}
-      onCopy={() => handleCopyToClipboard(item.text)}
+      onDelete={() => {
+        console.log('Delete action triggered for item:', item.id);
+        handleDeleteItem(item.id);
+      }}
+      onCopy={() => {
+        console.log('Copy action triggered for item:', item.text);
+        handleCopyToClipboard(item.text);
+      }}
     />
   );
 

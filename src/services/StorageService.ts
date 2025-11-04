@@ -74,17 +74,27 @@ class StorageService {
 
   async deleteClipboardItem(itemId: string): Promise<void> {
     try {
+      console.log('Deleting clipboard item:', itemId);
       const items = await this.getClipboardItems();
       const itemToDelete = items.find(item => item.id === itemId);
+      
+      if (!itemToDelete) {
+        console.log('Item not found:', itemId);
+        throw new Error(`Item with ID ${itemId} not found`);
+      }
+      
       const updatedItems = items.filter(item => item.id !== itemId);
       await AsyncStorage.setItem(STORAGE_KEYS.CLIPBOARD_ITEMS, JSON.stringify(updatedItems));
+      console.log('Item deleted successfully, items remaining:', updatedItems.length);
       
       // Update folder item count if item belonged to a folder
-      if (itemToDelete && itemToDelete.folderId) {
+      if (itemToDelete.folderId) {
+        console.log('Updating folder item count for folder:', itemToDelete.folderId);
         await this.updateFolderItemCount(itemToDelete.folderId);
       }
     } catch (error) {
       console.error('Error deleting clipboard item:', error);
+      throw error; // Re-throw so calling function knows about the error
     }
   }
 
