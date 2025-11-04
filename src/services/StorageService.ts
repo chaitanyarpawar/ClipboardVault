@@ -35,8 +35,18 @@ class StorageService {
       
       const items = await this.getClipboardItems();
       const updatedItems = [item, ...items];
-      await AsyncStorage.setItem(STORAGE_KEYS.CLIPBOARD_ITEMS, JSON.stringify(updatedItems));
-      console.log('Clipboard item saved to storage successfully');
+      
+      // Limit to 50 most recent items
+      const limitedItems = updatedItems.slice(0, 50);
+      
+      // Log if items were removed due to limit
+      if (updatedItems.length > 50) {
+        const removedCount = updatedItems.length - 50;
+        console.log(`Clipboard limit reached: removed ${removedCount} oldest items, keeping 50 most recent`);
+      }
+      
+      await AsyncStorage.setItem(STORAGE_KEYS.CLIPBOARD_ITEMS, JSON.stringify(limitedItems));
+      console.log(`Clipboard item saved to storage successfully (${limitedItems.length} items total)`);
       
       // Update folder item count if item belongs to a folder
       if (item.folderId) {
@@ -323,6 +333,30 @@ class StorageService {
       await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
     } catch (error) {
       console.error('Error clearing all data:', error);
+    }
+  }
+
+  // Enforce 50 item limit on existing data
+  async enforceItemLimit(): Promise<void> {
+    try {
+      const items = await this.getClipboardItems();
+      
+      if (items.length > 50) {
+        console.log(`Found ${items.length} items, enforcing 50 item limit`);
+        
+        // Keep only the 50 most recent items (already sorted by timestamp)
+        const limitedItems = items.slice(0, 50);
+        
+        await AsyncStorage.setItem(STORAGE_KEYS.CLIPBOARD_ITEMS, JSON.stringify(limitedItems));
+        console.log(`Enforced item limit: kept 50 most recent items, removed ${items.length - 50} oldest items`);
+        
+        // Recalculate folder item counts after cleanup
+        await this.recalculateAllFolderItemCounts();
+      } else {
+        console.log(`Current item count (${items.length}) is within the 50 item limit`);
+      }
+    } catch (error) {
+      console.error('Error enforcing item limit:', error);
     }
   }
 

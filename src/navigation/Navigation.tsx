@@ -38,7 +38,6 @@ export type MainTabParamList = {
 export type HomeTopTabParamList = {
   All: undefined;
   Favorites: undefined;
-  Folders: undefined;
 };
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -74,7 +73,6 @@ const HomeTopTabs = () => {
     >
       <TopTab.Screen name="All" component={HomeScreen} />
       <TopTab.Screen name="Favorites" component={HomeScreen} />
-      <TopTab.Screen name="Folders" component={HomeScreen} />
     </TopTab.Navigator>
   );
 };

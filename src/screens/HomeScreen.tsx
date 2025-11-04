@@ -60,6 +60,9 @@ const HomeScreen: React.FC = () => {
     // Recalculate folder item counts on app start
     StorageService.recalculateAllFolderItemCounts();
     
+    // Enforce 50 item limit on app start
+    StorageService.enforceItemLimit();
+    
     // Check clipboard when window regains focus on web
     if (Platform.OS === 'web') {
       // Also check clipboard when window regains focus
@@ -414,6 +417,23 @@ const HomeScreen: React.FC = () => {
         >
           <Ionicons name="refresh" size={20} color={theme.colors.primary} />
         </TouchableOpacity>
+      </View>
+
+      {/* Item Counter */}
+      <View style={[styles.counterContainer, { backgroundColor: theme.colors.card }]}>
+        <View style={styles.counterContent}>
+          <Ionicons name="clipboard-outline" size={16} color={theme.colors.textSecondary} />
+          <Text style={[styles.counterText, { color: theme.colors.textSecondary }]}>
+            {clipboardItems.length} / 50 items
+          </Text>
+          {clipboardItems.length >= 45 && (
+            <View style={[styles.warningBadge, { backgroundColor: clipboardItems.length >= 50 ? '#FF4444' : '#FF8800' }]}>
+              <Text style={styles.warningText}>
+                {clipboardItems.length >= 50 ? 'FULL' : 'NEAR LIMIT'}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* Items List */}
@@ -1173,6 +1193,39 @@ const styles = StyleSheet.create({
   createFolderButtonSecondary: {
     backgroundColor: 'transparent',
     marginHorizontal: 8,
+  },
+  // Counter styles
+  counterContainer: {
+    marginHorizontal: 16,
+    marginTop: 8,
+    marginBottom: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  counterContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  counterText: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginLeft: 6,
+    flex: 1,
+  },
+  warningBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+    marginLeft: 8,
+  },
+  warningText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
 });
 
