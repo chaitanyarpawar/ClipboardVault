@@ -9,6 +9,7 @@ import {
   Share,
   TextInput,
   Platform,
+  Animated,
 } from 'react-native';
 import { useTheme } from '../theme';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -31,6 +32,23 @@ const DetailScreen: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState('');
   const [loading, setLoading] = useState(true);
+  
+  // Toast state
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+
+  // Toast function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+      setToastVisible(false);
+    }, 3000);
+  };
 
   useEffect(() => {
     loadItem();
@@ -60,9 +78,9 @@ const DetailScreen: React.FC = () => {
     if (!item) return;
     try {
       await ClipboardService.copyToClipboard(item.text);
-      Alert.alert('Copied', 'Text copied to clipboard');
+      showToast('Text copied to clipboard');
     } catch (error) {
-      Alert.alert('Error', 'Failed to copy text');
+      showToast('Failed to copy text', 'error');
     }
   };
 
@@ -89,9 +107,9 @@ const DetailScreen: React.FC = () => {
       await StorageService.updateClipboardItem(updatedItem);
       setItem(updatedItem);
       setIsEditing(false);
-      Alert.alert('Success', 'Text updated successfully');
+      showToast('Text updated successfully');
     } catch (error) {
-      Alert.alert('Error', 'Failed to update text');
+      showToast('Failed to update text', 'error');
     }
   };
 
@@ -101,7 +119,7 @@ const DetailScreen: React.FC = () => {
       await ClipboardService.toggleFavorite(item.id);
       setItem({ ...item, isFavorite: !item.isFavorite });
     } catch (error) {
-      Alert.alert('Error', 'Failed to update favorite status');
+      showToast('Failed to update favorite status', 'error');
     }
   };
 
@@ -119,11 +137,13 @@ const DetailScreen: React.FC = () => {
           onPress: async () => {
             try {
               await ClipboardService.deleteItem(item.id);
-              Alert.alert('Success', 'Item deleted successfully', [
-                { text: 'OK', onPress: () => navigation.goBack() }
-              ]);
+              showToast('Item deleted successfully');
+              // Navigate back after a short delay to show the toast
+              setTimeout(() => {
+                navigation.goBack();
+              }, 1500);
             } catch (error) {
-              Alert.alert('Error', 'Failed to delete item');
+              showToast('Failed to delete item', 'error');
             }
           }
         }
@@ -341,6 +361,21 @@ const DetailScreen: React.FC = () => {
           </>
         )}
       </View>
+
+      {/* Toast Notification */}
+      {toastVisible && (
+        <Animated.View
+          style={[
+            styles.toastContainer,
+            {
+              backgroundColor: toastType === 'success' ? '#4CAF50' : '#F44336',
+              bottom: 100,
+            }
+          ]}
+        >
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
     </View>
   );
 };
@@ -484,6 +519,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '500',
     marginTop: 4,
+  },
+  // Toast styles
+  toastContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  toastText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 

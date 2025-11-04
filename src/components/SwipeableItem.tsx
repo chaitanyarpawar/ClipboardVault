@@ -238,8 +238,11 @@ const SwipeableItem: React.FC<SwipeableItemProps> = ({
       <Swipeable
         ref={swipeableRef}
         renderLeftActions={renderLeftActions}
-        leftThreshold={50}
+        leftThreshold={30}
         overshootLeft={false}
+        friction={2}
+        enableTrackpadTwoFingerGesture={true}
+        containerStyle={{ backgroundColor: 'transparent' }}
       >
         <ItemContent />
       </Swipeable>
@@ -352,6 +355,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     paddingHorizontal: 8,
+    minWidth: 70,
+    minHeight: 80,
   },
   actionText: {
     color: 'white',

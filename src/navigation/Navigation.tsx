@@ -166,6 +166,7 @@ const Navigation = () => {
   return (
     <NavigationContainer theme={navigationTheme}>
       <Stack.Navigator
+        initialRouteName="Splash"
         screenOptions={{
           headerShown: false,
           headerStyle: {

@@ -16,36 +16,45 @@ class ClipboardService {
   async initializeMonitoring(): Promise<void> {
     try {
       if (Platform.OS === 'web') {
-        console.log('Background monitoring not supported on web');
+        console.log('Background monitoring not supported on web, using manual checks');
         this.isMonitoring = false;
+        // Get current clipboard content to initialize
+        this.lastClipboardContent = await Clipboard.getStringAsync();
         return;
       }
 
-      // Register background task
-      TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
-        try {
-          await this.checkAndSaveClipboard();
-          return BackgroundFetch.BackgroundFetchResult.NewData;
-        } catch (error) {
-          console.error('Background clipboard check failed:', error);
-          return BackgroundFetch.BackgroundFetchResult.Failed;
-        }
-      });
+      // Try to register background task
+      try {
+        TaskManager.defineTask(BACKGROUND_FETCH_TASK, async () => {
+          try {
+            await this.checkAndSaveClipboard();
+            return BackgroundFetch.BackgroundFetchResult.NewData;
+          } catch (error) {
+            console.error('Background clipboard check failed:', error);
+            return BackgroundFetch.BackgroundFetchResult.Failed;
+          }
+        });
 
-      // Register background fetch
-      await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
-        minimumInterval: 10000, // 10 seconds
-        stopOnTerminate: false,
-        startOnBoot: true,
-      });
+        // Register background fetch
+        await BackgroundFetch.registerTaskAsync(BACKGROUND_FETCH_TASK, {
+          minimumInterval: 10000, // 10 seconds
+          stopOnTerminate: false,
+          startOnBoot: true,
+        });
 
-      // Get current clipboard content to initialize
+        this.isMonitoring = true;
+        console.log('Background clipboard monitoring initialized successfully');
+      } catch (backgroundError) {
+        console.warn('Background monitoring failed, falling back to manual checks:', backgroundError);
+        this.isMonitoring = false;
+      }
+
+      // Get current clipboard content to initialize (always do this)
       this.lastClipboardContent = await Clipboard.getStringAsync();
-      this.isMonitoring = true;
 
-      console.log('Clipboard monitoring initialized');
     } catch (error) {
       console.error('Error initializing clipboard monitoring:', error);
+      this.isMonitoring = false;
     }
   }
 

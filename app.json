@@ -24,7 +24,9 @@
       "package": "com.clipboardvault.app",
       "permissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.WAKE_LOCK"
       ]
     },
     "web": {
@@ -34,9 +36,16 @@
       [
         "expo-background-fetch",
         {
-          "backgroundModes": ["background-fetch"]
+          "backgroundModes": [
+            "background-fetch"
+          ]
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "470d67da-73f1-43aa-a50a-411292bce81a"
+      }
+    }
   }
 }

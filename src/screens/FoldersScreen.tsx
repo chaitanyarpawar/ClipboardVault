@@ -213,6 +213,8 @@ const FoldersScreen: React.FC = () => {
         <Ionicons name="add" size={28} color="white" />
       </TouchableOpacity>
 
+
+
       {/* Create Folder Modal */}
       <Modal
         visible={showCreateModal}

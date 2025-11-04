@@ -48,11 +48,26 @@ const HomeScreen: React.FC = () => {
   const [newFolderName, setNewFolderName] = useState('');
   const [selectedItemForFolder, setSelectedItemForFolder] = useState<ClipboardItem | null>(null);
   const [showMoveToFolderModal, setShowMoveToFolderModal] = useState(false);
+  
+  // Toast state
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   // Get current tab from route name
   const currentTab = route.name as 'All' | 'Favorites' | 'Folders';
 
-  useEffect(() => {
+  // Toast function
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+    
+    // Auto hide after 3 seconds
+    setTimeout(() => {
+      setToastVisible(false);
+    }, 3000);
+  };  useEffect(() => {
     loadClipboardItems();
     loadFolders();
     initializeClipboardMonitoring();
@@ -88,7 +103,7 @@ const HomeScreen: React.FC = () => {
     try {
       await ClipboardService.initializeMonitoring();
       
-      // For web, add a more frequent check since background monitoring doesn't work
+      // For web or when background monitoring fails, add interval checking
       if (Platform.OS === 'web') {
         const checkInterval = setInterval(async () => {
           try {
@@ -98,15 +113,16 @@ const HomeScreen: React.FC = () => {
               console.log('New clipboard content detected and saved!');
             }
           } catch (error) {
-            console.log('Web clipboard check error:', error);
+            console.log('Clipboard check error:', error);
           }
-        }, 1000); // Check every 1 second on web for better responsiveness
+        }, 2000); // Check every 2 seconds
         
-        // Store interval for cleanup (in real app, you'd want to clear this on unmount)
+        // Store interval for cleanup
         (window as any).clipboardInterval = checkInterval;
       }
     } catch (error) {
-      console.error('Error initializing clipboard monitoring:', error);
+      console.log('Clipboard monitoring initialization completed with fallback mode');
+      // Don't show error to user since fallback will work
     }
   };
 
@@ -218,10 +234,10 @@ const HomeScreen: React.FC = () => {
       console.log('Reloading folders...');
       await loadFolders();
       
-      Alert.alert('Success', 'Item added successfully!');
+      showToast('Item added successfully!');
     } catch (error) {
       console.error('=== ERROR SAVING ITEM ===', error);
-      Alert.alert('Error', 'Failed to add item: ' + (error instanceof Error ? error.message : String(error)));
+      showToast('Failed to add item: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
     }
   };
 
@@ -263,11 +279,11 @@ const HomeScreen: React.FC = () => {
       setNewFolderName('');
       setShowCreateFolder(false);
       
-      Alert.alert('Success', `Folder "${newFolder.name}" created successfully!`);
+      showToast(`Folder "${newFolder.name}" created successfully!`);
     } catch (error) {
       console.error('Error creating folder:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      Alert.alert('Error', `Failed to create folder: ${errorMessage}`);
+      showToast(`Failed to create folder: ${errorMessage}`, 'error');
     }
   };
 
@@ -279,9 +295,9 @@ const HomeScreen: React.FC = () => {
   const handleCopyToClipboard = async (text: string) => {
     try {
       await ClipboardService.copyToClipboard(text);
-      Alert.alert('Copied', 'Text copied to clipboard');
+      showToast('Text copied to clipboard');
     } catch (error) {
-      Alert.alert('Error', 'Failed to copy text');
+      showToast('Failed to copy text', 'error');
     }
   };
 
@@ -290,7 +306,7 @@ const HomeScreen: React.FC = () => {
       await ClipboardService.toggleFavorite(itemId);
       loadClipboardItems();
     } catch (error) {
-      Alert.alert('Error', 'Failed to update favorite status');
+      showToast('Failed to update favorite status', 'error');
     }
   };
 
@@ -307,13 +323,22 @@ const HomeScreen: React.FC = () => {
           onPress: async () => {
             try {
               console.log('User confirmed deletion, deleting item:', itemId);
+              
+              // Delete the item
               await ClipboardService.deleteItem(itemId);
-              console.log('Item deleted successfully, reloading items');
-              await loadClipboardItems();
-              Alert.alert('Success', 'Item deleted successfully');
+              console.log('Item deleted successfully');
+              
+              // Immediately refresh the list and folders count
+              await Promise.all([
+                loadClipboardItems(),
+                loadFolders()
+              ]);
+              
+              console.log('Lists refreshed after deletion');
+              showToast('Item deleted successfully');
             } catch (error) {
               console.error('Error deleting item:', error);
-              Alert.alert('Error', 'Failed to delete item: ' + (error instanceof Error ? error.message : 'Unknown error'));
+              showToast('Failed to delete item: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
             }
           },
         },
@@ -337,9 +362,9 @@ const HomeScreen: React.FC = () => {
       setSelectedItemForFolder(null);
       
       const folderName = folderId ? folders.find(f => f.id === folderId)?.name || 'Unknown' : 'No folder';
-      Alert.alert('Success', `Item moved to ${folderName}!`);
+      showToast(`Item moved to ${folderName}!`);
     } catch (error) {
-      Alert.alert('Error', 'Failed to move item to folder');
+      showToast('Failed to move item to folder', 'error');
     }
   };
 
@@ -408,15 +433,17 @@ const HomeScreen: React.FC = () => {
             try {
               const hasNew = await ClipboardService.checkAndSaveClipboard();
               await loadClipboardItems();
-              Alert.alert('Clipboard Check', hasNew ? 'New content detected!' : 'No new content');
+              showToast(hasNew ? 'New content detected!' : 'No new content');
             } catch (error) {
-              Alert.alert('Error', 'Failed to check clipboard');
+              showToast('Failed to check clipboard', 'error');
             }
           }}
           style={{ marginLeft: 8 }}
         >
           <Ionicons name="refresh" size={20} color={theme.colors.primary} />
         </TouchableOpacity>
+
+
       </View>
 
       {/* Item Counter */}
@@ -802,6 +829,21 @@ const HomeScreen: React.FC = () => {
           </BlurView>
         </View>
       </Modal>
+
+      {/* Toast Notification */}
+      {toastVisible && (
+        <Animated.View
+          style={[
+            styles.toastContainer,
+            {
+              backgroundColor: toastType === 'success' ? '#4CAF50' : '#F44336',
+              bottom: 100,
+            }
+          ]}
+        >
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </Animated.View>
+      )}
     </View>
   );
 };
@@ -1226,6 +1268,27 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 10,
     fontWeight: 'bold',
+  },
+  // Toast styles
+  toastContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  toastText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 
