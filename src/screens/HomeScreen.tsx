@@ -410,7 +410,7 @@ const HomeScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+    <View style={[styles.container, { backgroundColor: theme.colors.background }]}> 
       {/* Search Bar */}
       <View style={[styles.searchContainer, { backgroundColor: theme.colors.card }]}>
         <Ionicons name="search" size={20} color={theme.colors.textSecondary} />
@@ -442,7 +442,6 @@ const HomeScreen: React.FC = () => {
         >
           <Ionicons name="refresh" size={20} color={theme.colors.primary} />
         </TouchableOpacity>
-
 
       </View>
 

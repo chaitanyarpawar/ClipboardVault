@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { AppHeader } from '../components';
 
 // Import screens
 import {
@@ -49,7 +50,9 @@ const HomeTopTabs = () => {
   const { theme } = useTheme();
   
   return (
-    <TopTab.Navigator
+    <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+      <AppHeader title="Clipboard Manager" />
+      <TopTab.Navigator
       screenOptions={{
         tabBarStyle: {
           backgroundColor: theme.colors.background,
@@ -74,6 +77,7 @@ const HomeTopTabs = () => {
       <TopTab.Screen name="All" component={HomeScreen} />
       <TopTab.Screen name="Favorites" component={HomeScreen} />
     </TopTab.Navigator>
+    </View>
   );
 };
 

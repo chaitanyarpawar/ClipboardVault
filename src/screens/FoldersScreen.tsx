@@ -15,6 +15,7 @@ import { Folder, ClipboardItem } from '../types';
 import StorageService from '../services/StorageService';
 import ClipboardService from '../services/ClipboardService';
 import { Ionicons } from '@expo/vector-icons';
+import { AppHeader } from '../components';
 import { generateUniqueId, generateFolderColor, generateFolderIcon } from '../utils';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -32,6 +33,11 @@ const FoldersScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
+  
+  // Toast state
+  const [toastMessage, setToastMessage] = useState<string>('');
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
 
   useEffect(() => {
     const initializeFolders = async () => {
@@ -50,6 +56,14 @@ const FoldersScreen: React.FC = () => {
 
     return unsubscribe;
   }, [navigation, folders]);
+
+  // Toast helper
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setToastType(type);
+    setToastVisible(true);
+    setTimeout(() => setToastVisible(false), 3000);
+  };
 
   const loadFolders = async () => {
     try {
@@ -80,7 +94,7 @@ const FoldersScreen: React.FC = () => {
 
   const handleCreateFolder = async () => {
     if (newFolderName.trim().length === 0) {
-      Alert.alert('Error', 'Please enter a folder name');
+      showToast('Please enter a folder name', 'error');
       return;
     }
 
@@ -99,7 +113,7 @@ const FoldersScreen: React.FC = () => {
       setNewFolderName('');
       setShowCreateModal(false);
     } catch (error) {
-      Alert.alert('Error', 'Failed to create folder');
+      showToast('Failed to create folder', 'error');
     }
   };
 
@@ -121,10 +135,10 @@ const FoldersScreen: React.FC = () => {
               await loadFolders(); // Reload from storage instead of filtering local state
               await recalculateItemCounts(); // Recalculate item counts after deletion
               console.log('Folders reloaded successfully');
-              Alert.alert('Success', 'Folder deleted successfully');
+              showToast('Folder deleted successfully');
             } catch (error) {
               console.error('Error deleting folder:', error);
-              Alert.alert('Error', 'Failed to delete folder: ' + (error instanceof Error ? error.message : 'Unknown error'));
+              showToast('Failed to delete folder: ' + (error instanceof Error ? error.message : 'Unknown error'), 'error');
             }
           },
         },
@@ -186,6 +200,7 @@ const FoldersScreen: React.FC = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <AppHeader title="Folders" />
       {/* Folders List */}
       <FlatList
         data={folders}
@@ -269,6 +284,18 @@ const FoldersScreen: React.FC = () => {
           </BlurView>
         </View>
       </Modal>
+
+      {/* Toast Notification */}
+      {toastVisible && (
+        <View
+          style={[
+            styles.toastContainer,
+            { backgroundColor: toastType === 'success' ? '#4CAF50' : '#F44336', bottom: 24 },
+          ]}
+        >
+          <Text style={styles.toastText}>{toastMessage}</Text>
+        </View>
+      )}
     </View>
   );
 };
@@ -408,6 +435,27 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Toast styles
+  toastContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+    zIndex: 1000,
+  },
+  toastText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
   },
 });
 

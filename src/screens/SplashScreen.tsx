@@ -1,7 +1,6 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
-// Conditional imports for web compatibility
-const LinearGradient = Platform.OS === 'web' ? View : require('expo-linear-gradient').LinearGradient;
+import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle, 
@@ -69,14 +68,16 @@ const SplashScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <Animated.View style={[StyleSheet.absoluteFillObject, gradientAnimatedStyle]}>
-        <LinearGradient
-          {...(Platform.OS !== 'web' && { 
-            colors: ['#6366F1', '#8B5CF6', '#A855F7'],
-            start: { x: 0, y: 0 },
-            end: { x: 1, y: 1 }
-          })}
-          style={[StyleSheet.absoluteFillObject, Platform.OS === 'web' && { backgroundColor: '#6366F1' }]}
-        />
+        {Platform.OS === 'web' ? (
+          <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#6366F1' }]} />
+        ) : (
+          <LinearGradient
+            colors={['#6366F1', '#8B5CF6', '#A855F7']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+          />
+        )}
       </Animated.View>
       
       <View style={styles.content}>

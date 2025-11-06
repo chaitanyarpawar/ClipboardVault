@@ -133,10 +133,85 @@ class StorageService {
           createdAt: new Date(folder.createdAt),
         }));
       }
-      return [];
+      
+      // If no folders exist, create default folders
+      console.log('No folders found, creating default folders');
+      await this.createDefaultFolders();
+      return await this.getFolders();
     } catch (error) {
       console.error('Error getting folders:', error);
       return [];
+    }
+  }
+
+  async createDefaultFolders(): Promise<void> {
+    try {
+      const defaultFolders: Folder[] = [
+        {
+          id: 'default-work',
+          name: 'Work',
+          color: '#3B82F6', // Blue
+          icon: 'briefcase',
+          createdAt: new Date(),
+          itemCount: 0,
+        },
+        {
+          id: 'default-personal',
+          name: 'Personal',
+          color: '#10B981', // Green
+          icon: 'person',
+          createdAt: new Date(),
+          itemCount: 0,
+        },
+        {
+          id: 'default-code',
+          name: 'Code Snippets',
+          color: '#8B5CF6', // Purple
+          icon: 'code-slash',
+          createdAt: new Date(),
+          itemCount: 0,
+        },
+        {
+          id: 'default-links',
+          name: 'Links & URLs',
+          color: '#F59E0B', // Amber
+          icon: 'link',
+          createdAt: new Date(),
+          itemCount: 0,
+        },
+        {
+          id: 'default-notes',
+          name: 'Quick Notes',
+          color: '#EF4444', // Red
+          icon: 'document-text',
+          createdAt: new Date(),
+          itemCount: 0,
+        },
+        {
+          id: 'default-important',
+          name: 'Important',
+          color: '#F97316', // Orange
+          icon: 'star',
+          createdAt: new Date(),
+          itemCount: 0,
+        },
+      ];
+
+      await AsyncStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(defaultFolders));
+      console.log('Default folders created successfully');
+    } catch (error) {
+      console.error('Error creating default folders:', error);
+    }
+  }
+
+  // Method to reset folders (useful for testing or resetting app)
+  async resetToDefaultFolders(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEYS.FOLDERS);
+      await this.createDefaultFolders();
+      console.log('Reset to default folders successfully');
+    } catch (error) {
+      console.error('Error resetting to default folders:', error);
     }
   }
 
@@ -144,13 +219,27 @@ class StorageService {
     try {
       const folders = await this.getFolders();
       
-      // Check if folder with same ID or name already exists
-      const existingFolder = folders.find(f => f.id === folder.id || f.name === folder.name);
-      if (existingFolder) {
+      // Check if folder with same name already exists (excluding the folder being updated)
+      const existingFolderByName = folders.find(f => f.name === folder.name && f.id !== folder.id);
+      if (existingFolderByName) {
         throw new Error(`Folder with name "${folder.name}" already exists`);
       }
       
-      const updatedFolders = [...folders, folder];
+      // Check if we're updating an existing folder or creating a new one
+      const existingFolderIndex = folders.findIndex(f => f.id === folder.id);
+      let updatedFolders;
+      
+      if (existingFolderIndex !== -1) {
+        // Update existing folder
+        updatedFolders = [...folders];
+        updatedFolders[existingFolderIndex] = folder;
+        console.log('Updated existing folder:', folder.name);
+      } else {
+        // Add new folder
+        updatedFolders = [...folders, folder];
+        console.log('Added new folder:', folder.name);
+      }
+      
       await AsyncStorage.setItem(STORAGE_KEYS.FOLDERS, JSON.stringify(updatedFolders));
       console.log('Successfully saved folder:', folder.name);
     } catch (error) {
@@ -248,12 +337,18 @@ class StorageService {
     try {
       const settings = await AsyncStorage.getItem(STORAGE_KEYS.APP_SETTINGS);
       if (settings) {
-        return JSON.parse(settings);
+        const parsed = JSON.parse(settings);
+        // Backfill defaults for newly added settings
+        if (parsed.tagSuggestions === undefined) {
+          parsed.tagSuggestions = true;
+        }
+        return parsed;
       }
       // Default settings
       const defaultSettings: AppSettings = {
         theme: 'system',
         autoSave: true,
+        tagSuggestions: true,
         backgroundSync: true,
         hapticFeedback: true,
         isPremium: false,
@@ -266,6 +361,7 @@ class StorageService {
       return {
         theme: 'system',
         autoSave: true,
+        tagSuggestions: true,
         backgroundSync: true,
         hapticFeedback: true,
         isPremium: false,
@@ -331,6 +427,8 @@ class StorageService {
   async clearAllData(): Promise<void> {
     try {
       await AsyncStorage.multiRemove(Object.values(STORAGE_KEYS));
+      // Recreate default folders after clearing all data
+      await this.createDefaultFolders();
     } catch (error) {
       console.error('Error clearing all data:', error);
     }

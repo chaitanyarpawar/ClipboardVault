@@ -20,6 +20,7 @@ export interface Folder {
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   autoSave: boolean;
+  tagSuggestions?: boolean; // Enable Tag Suggestions feature flag
   backgroundSync: boolean;
   hapticFeedback: boolean;
   isPremium: boolean;
