@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   Switch,
   Platform,
+  Share,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
@@ -64,6 +66,30 @@ const SettingsScreen: React.FC = () => {
   const handleThemeChange = (mode: 'light' | 'dark' | 'system') => {
     setThemeMode(mode);
     updateSetting('theme', mode);
+  };
+
+  // Actions
+  const handleRateApp = async () => {
+    // Attempt to open store listing; fallback to web
+    const androidUrl = 'market://details?id=com.clipboardvault.app';
+    const webUrl = 'https://play.google.com/store/apps/details?id=com.clipboardvault.app';
+    try {
+      const supported = await Linking.canOpenURL(androidUrl);
+      await Linking.openURL(supported ? androidUrl : webUrl);
+    } catch {
+      // no-op
+    }
+  };
+
+  const handleShareApp = async () => {
+    try {
+      await Share.share({
+        message:
+          'Check out ClipboardVault – a fast, private clipboard manager. Download: https://play.google.com/store/apps/details?id=com.clipboardvault.app',
+      });
+    } catch {
+      // no-op
+    }
   };
 
   // Simple section container matching screenshot style
@@ -142,6 +168,25 @@ const SettingsScreen: React.FC = () => {
         <ThemeSegment />
       </Section>
 
+      {/* Support */}
+      <Section title="Support">
+        <TouchableOpacity style={styles.rowButton} onPress={handleRateApp}>
+          <Text style={[styles.rowButtonText, { color: theme.colors.text }]}>Rate this app</Text>
+        </TouchableOpacity>
+        <View style={[styles.divider, { backgroundColor: theme.colors.border }]} />
+        <TouchableOpacity style={styles.rowButton} onPress={handleShareApp}>
+          <Text style={[styles.rowButtonText, { color: theme.colors.text }]}>Share with Friends</Text>
+        </TouchableOpacity>
+      </Section>
+
+      {/* Ads Info */}
+      <Section title="Ads Info">
+        <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+          <Text style={[styles.metaText, { color: theme.colors.textSecondary }]}>This app is free and supported by ads</Text>
+          <Text style={[styles.metaText, { color: theme.colors.textSecondary, marginTop: 6 }]}>We never track personal clipboard content.</Text>
+        </View>
+      </Section>
+
       {/* Bottom spacing */}
       <View style={styles.bottomSpace} />
     </ScrollView>
@@ -192,6 +237,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     opacity: 0.6,
   },
+  rowButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  rowButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
   segmentContainer: {
     flexDirection: 'row',
     marginHorizontal: 16,
@@ -217,6 +270,10 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: 40,
+  },
+  metaText: {
+    fontSize: 13,
+    lineHeight: 18,
   },
 });
 
